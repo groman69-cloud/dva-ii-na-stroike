@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Интерактивный гид: как организовать совместную работу ChatGPT и Claude на реальном ремонте.">
+<title>Два ИИ на объекте</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Neucha&display=swap">
+<style>
+body{margin:0}[hidden]{display:none!important}img{max-width:100%}
+
+/* Layout: одна колонка «строительного журнала» на бетоне; разделы — малярный скотч, разделители — рулетка с миллиметрами */
+:root{
+  --bg:#e4e3df; --paper:#f5f4f0; --fg:#1d1f22; --muted:#5c5f65; --line:#c8c6bf;
+  --tape:#f1c84b; --tape-ink:#2a2306;
+  --claude:#b0532f; --claude-soft:#f3dfd5;
+  --gpt:#137a63; --gpt-soft:#d3ece5;
+  --you:#8a6a00; --you-soft:#f7ecc4;
+  --ok:#2c7a38; --ok-soft:#dcefdc; --bad:#b0342a; --bad-soft:#f6dcd8;
+  --display:'Unbounded','Arial Black',system-ui,sans-serif;
+  --body:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --hand:'Neucha','Comic Sans MS','Segoe Print',cursive;
+  --noise:.06;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#17181a; --paper:#212327; --fg:#ebe9e4; --muted:#a2a5ab; --line:#36393e;
+  --tape:#e0b83f; --tape-ink:#1f1904;
+  --claude:#e88c69; --claude-soft:#3a251d;
+  --gpt:#4fc4a6; --gpt-soft:#173229;
+  --you:#ebc65c; --you-soft:#3a3015;
+  --ok:#6cc47b; --ok-soft:#1b3320; --bad:#ef7468; --bad-soft:#3d1f1c;
+  --noise:.09; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#17181a; --paper:#212327; --fg:#ebe9e4; --muted:#a2a5ab; --line:#36393e;
+  --tape:#e0b83f; --tape-ink:#1f1904;
+  --claude:#e88c69; --claude-soft:#3a251d;
+  --gpt:#4fc4a6; --gpt-soft:#173229;
+  --you:#ebc65c; --you-soft:#3a3015;
+  --ok:#6cc47b; --ok-soft:#1b3320; --bad:#ef7468; --bad-soft:#3d1f1c;
+  --noise:.09; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6;position:relative}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:var(--noise);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.wrap{max-width:780px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;position:relative}
+p{margin:0}
+.flow{display:flex;flex-direction:column;gap:16px}
+.flow-lg{display:flex;flex-direction:column;gap:28px}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,7.5vw,62px);font-weight:900;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4.6vw,34px);font-weight:700}
+h3{font-size:19px;font-weight:700}
+h4{font-size:15px;font-weight:700}
+em{font-style:italic}
+strong{font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:14.5px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:3px}
+
+.tape{display:inline-block;align-self:flex-start;background:var(--tape);color:var(--tape-ink);font-family:var(--hand);font-size:19px;line-height:1.2;padding:4px 16px 3px;transform:rotate(-1.6deg);
+  clip-path:polygon(0 8%,3% 0,97% 4%,100% 0,99% 50%,100% 96%,96% 100%,4% 95%,0 100%,1% 50%)}
+.tape.r{transform:rotate(1.2deg)}
+
+.who{display:inline-block;font-family:var(--mono);font-size:.78em;font-weight:600;padding:1px 7px;border-radius:4px;letter-spacing:.02em;white-space:nowrap}
+.who.c{background:var(--claude-soft);color:var(--claude)}
+.who.g{background:var(--gpt-soft);color:var(--gpt)}
+.who.y{background:var(--you-soft);color:var(--you)}
+
+/* hero */
+.hero{display:flex;flex-direction:column;gap:20px;padding-bottom:8px}
+.hero .lede{font-size:19px;max-width:36em}
+.chat{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.bub{max-width:min(440px,88%);padding:10px 14px;border-radius:14px;font-size:16px;line-height:1.45;border:1px solid var(--line);background:var(--paper)}
+.bub .name{display:block;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:2px}
+.bub.g{border-top-left-radius:4px}.bub.g .name{color:var(--gpt)}
+.bub.c{align-self:flex-end;border-top-right-radius:4px}.bub.c .name{color:var(--claude)}
+.bub.y{align-self:center;background:var(--tape);color:var(--tape-ink);border-color:transparent;font-family:var(--hand);font-size:22px;transform:rotate(-1deg)}
+.bub.y .name{color:var(--tape-ink);font-family:var(--mono)}
+
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:640px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{background:var(--paper);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat b{font-family:var(--display);font-size:clamp(26px,5vw,34px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;line-height:1.4;color:var(--muted)}
+
+/* ruler divider */
+.ruler{height:34px;margin-block:44px;position:relative;border-top:2px solid var(--fg);
+  background:
+   repeating-linear-gradient(90deg,var(--fg) 0 1px,transparent 1px 10px) top left/100% 7px no-repeat,
+   repeating-linear-gradient(90deg,var(--fg) 0 1.5px,transparent 1.5px 50px) top left/100% 13px no-repeat;
+  opacity:.75}
+.ruler span{position:absolute;top:14px;font-family:var(--mono);font-size:10.5px;color:var(--fg)}
+
+.note{border-left:4px solid var(--tape);background:var(--paper);padding:12px 16px;font-size:15.5px}
+.big-idea{font-family:var(--hand);font-size:clamp(24px,4.5vw,31px);line-height:1.25;background:var(--paper);border:2px dashed var(--fg);padding:18px 20px;text-wrap:balance}
+ul.clean{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+
+.panel{background:var(--paper);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.score{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* quiz engine */
+.qi{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px dashed var(--line)}
+.qi:first-of-type{border-top:0;padding-top:0}
+.qi .q{font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:14.5px;font-weight:500;padding:6px 13px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;transition:transform .12s,border-color .12s}
+.opt:hover{border-color:var(--fg);transform:translateY(-1px)}
+.opt:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+.opt[disabled]{cursor:default;transform:none;opacity:.55}
+.opt.right{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);opacity:1}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);opacity:1}
+.why{font-size:15px;line-height:1.5;padding:10px 12px;background:var(--bg);border-radius:6px}
+.why b.v-ok{color:var(--ok)} .why b.v-bad{color:var(--bad)}
+.reset{align-self:flex-start;font:inherit;font-size:13px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+
+/* segmented toggle */
+.seg{display:inline-flex;border:2px solid var(--fg);border-radius:999px;padding:3px;gap:3px;align-self:flex-start;flex-wrap:wrap}
+.seg button{font:inherit;font-size:14.5px;font-weight:700;border:0;border-radius:999px;padding:6px 14px;background:transparent;color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.steps li{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:start}
+.steps li:last-child{border-bottom:0}
+.steps .when{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
+.steps .what{min-width:0}
+.steps li.bad .what{color:var(--bad)} .steps li.good .what{color:var(--ok)}
+.steps li.bad .what::before{content:"✗ ";font-weight:700}
+.steps li.good .what::before{content:"✓ ";font-weight:700}
+.verdict{font-family:var(--hand);font-size:22px;line-height:1.3}
+
+/* console */
+.cmds{display:flex;flex-wrap:wrap;gap:8px}
+.cmd{font-family:var(--mono);font-size:14px;font-weight:600;padding:8px 12px;border:1.5px solid var(--fg);background:var(--bg);color:var(--fg);cursor:pointer;border-radius:4px}
+.cmd[aria-pressed="true"]{background:var(--tape);color:var(--tape-ink);border-color:var(--tape)}
+.cmd:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+.term{background:#15171a;color:#e6e4de;font-family:var(--mono);font-size:13.5px;line-height:1.6;padding:16px;border-radius:6px;min-height:220px;overflow-x:auto}
+.term .ln{display:block;white-space:pre-wrap}
+.term .p{color:#f1c84b}.term .c{color:#ef9a78}.term .g{color:#5fd0b2}.term .y{color:#f1d27a}.term .d{color:#8d9096}
+
+/* museum */
+.museum{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:640px){.museum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.exh{background:var(--paper);border:1px solid var(--line);min-width:0}
+.exh summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.exh summary::-webkit-details-marker{display:none}
+.exh summary:focus-visible{outline:3px solid var(--tape);outline-offset:-3px}
+.exh .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.exh .open-hint{font-size:13px;color:var(--muted)}
+.exh[open] .open-hint{display:none}
+.exh .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.exh .body .lbl{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* gang */
+.gang{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:680px){.gang{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.c{border-top-color:var(--claude)}.card.g{border-top-color:var(--gpt)}.card.y{border-top-color:var(--tape)}
+.card .role{font-family:var(--hand);font-size:21px;line-height:1.1}
+.card dl{margin:0;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.card dt{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card dd{margin:0}
+
+/* rhythm table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+
+/* cheat sheet */
+.cheat{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:600px){.cheat{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cheat div{background:var(--paper);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:6px;font-size:15px;min-width:0}
+.cheat h4 .n{font-family:var(--mono);color:var(--muted);font-weight:400;margin-right:6px}
+
+.honest{font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+.honest li{line-height:1.5}
+.conf{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:3px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+
+@media (max-width:480px){ .steps li{grid-template-columns:1fr;gap:2px} body{font-size:16px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="tape">журнал работ · объект «ремонт в бетоне»</span>
+  <h1>Какого хрена, нейросети?</h1>
+  <p class="lede">Неприлично длинный и местами нецензурный гид по тому, как заставить <span class="who g">ChatGPT</span> и <span class="who c">Claude</span> работать на одном проекте и не превратить его в коммуналку. Всё на реальном ремонте квартиры в голом бетоне: настоящие файлы, настоящие косяки, настоящие деньги.</p>
+
+  <div class="chat" aria-label="Пример рассинхрона">
+    <div class="bub g"><span class="name">GPT · Описание квартиры</span>Потолки подвесные, из ГКЛ. Это заменяет натяжные.</div>
+    <div class="bub c"><span class="name">Claude · Замечания</span>А хозяин в среду выбрал натяжной. В бюджете до сих пор висят 285 000 ₽ на ГКЛ.</div>
+    <div class="bub y"><span class="name">ТЫ</span>Какого хрена?</div>
+  </div>
+
+  <p>Это реальный диалог, только чуть сокращённый. Два ИИ, каждый по-своему прав, а виноват процесс. Хорошая новость: процесс чинится. Вот цифры с этого объекта:</p>
+
+  <div class="stats">
+    <div class="stat"><b>1</b><span>редактор у каждого файла, хотя ИИ два</span></div>
+    <div class="stat"><b>0</b><span>ИИ, которые сохраняют что-то сами, без твоей команды</span></div>
+    <div class="stat"><b>285&nbsp;000&nbsp;₽</b><span>строки за отменённый ГКЛ-потолок, которые продолжали жить в бюджете</span></div>
+    <div class="stat"><b>30&nbsp;мм</b><span>зазор у кухонного полуострова, существовавший только в одном файле</span></div>
+  </div>
+
+  <p class="muted small">Имена подрядчиков, адрес и личные данные убраны. Суммы и размеры настоящие.</p>
+</header>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">0</span><span style="left:calc(25% - 8px)">50</span><span style="left:calc(50% - 10px)">100</span><span style="left:calc(75% - 10px)">150</span></div>
+
+<section class="flow">
+  <span class="tape">Часть 1</span>
+  <h2>Зачем тебе второй ИИ, если первый и так умный</h2>
+  <p>Логичный вопрос. ChatGPT уже ведёт бюджет, помнит размеры полуострова и вежливо говорит «Готово!». Зачем звать ещё одного?</p>
+  <p>Затем же, зачем в стройке есть <strong>технадзор</strong>. Прораб может быть гением, но проверять сам себя он не будет. Не из подлости: автор просто не видит своих ошибок, он их уже «прочитал правильно» в голове. Бухгалтер не аудирует собственный отчёт по той же причине.</p>
+  <div class="big-idea">Второй ИИ ценен как независимый взгляд, а не как второй редактор.</div>
+  <p>Эта фраза из нашего «Манифеста совместной работы» и есть вся философия. Как только оба ИИ начинают править один файл, ты получаешь две беды сразу: конфликтующие правки и размытую ответственность. Кто поставил 1950 вместо 1920? «Мы». Отлично, спасибо.</p>
+  <div class="note"><strong>Честно:</strong> что разные модели ловят <em>разные</em> ошибки — это гипотеза, а не доказанный факт <span class="conf">уверенность средняя</span>. Обе учились на похожих текстах и могут ошибиться одинаково. Поэтому финальное «да» всегда за человеком, а не за «два ИИ согласились».</div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">150</span><span style="left:calc(25% - 10px)">200</span><span style="left:calc(50% - 10px)">250</span><span style="left:calc(75% - 10px)">300</span></div>
+
+<section class="flow">
+  <span class="tape r">Часть 2</span>
+  <h2>Роли. Кто тут прораб, кто технадзор, а кто платит</h2>
+  <p>Мы долго ходили кругами и в итоге закрепили три роли:</p>
+  <ul class="clean">
+    <li><span class="who g">GPT</span> <strong>редактор.</strong> Ведёт «Расходы», «Описание квартиры», «Журнал изменений». Единственный, кто правит главные файлы.</li>
+    <li><span class="who c">Claude</span> <strong>контролёр.</strong> Сверяет, считает, ищет дыры и дубли, готовит чек-листы приёмки, разбирает КП. Пишет только в «Замечания Claude» и новые отчёты. Чужие файлы не трогает.</li>
+    <li><span class="who y">ТЫ</span> <strong>владелец всех решений и денег.</strong> Утверждаешь, удаляешь, платишь. ИИ предлагают, ты решаешь.</li>
+  </ul>
+  <p>Звучит просто, пока не начнёшь раскладывать реальные задачи. Попробуй:</p>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Кто это делает?</h3><span class="score" id="score-roles"></span></div>
+    <div class="quiz" data-set="roles"></div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">300</span><span style="left:calc(25% - 10px)">350</span><span style="left:calc(50% - 10px)">400</span><span style="left:calc(75% - 10px)">450</span></div>
+
+<section class="flow">
+  <span class="tape">Часть 3</span>
+  <h2>Испорченный телефон на 285 000 рублей</h2>
+  <p>Главное, что надо знать про двух ИИ: <strong>они не видят чатов друг друга.</strong> Вообще. GPT не знает, о чём ты говорил с Claude, а Claude не знает, о чём ты договорился с GPT. И никто из них не сохраняет решение в файл сам по себе, пока ты не скажешь.</p>
+  <p>Значит, решение, принятое в чате, живёт только в этом чате. А чат — это болото: там половина вариантов уже отменена, но выглядит так же уверенно, как действующие.</p>
+  <div class="big-idea">Если чат и файл расходятся, прав файл. Пока ты не решишь иначе.</div>
+  <p>Посмотри, как одно решение проходит через систему. Переключай:</p>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Симулятор рассинхрона</h3></div>
+    <div class="seg" role="group" aria-label="Режим">
+      <button type="button" id="mode-off" aria-pressed="true">Без протокола</button>
+      <button type="button" id="mode-on" aria-pressed="false">С протоколом</button>
+    </div>
+    <ol class="steps" id="sim-steps"></ol>
+    <p class="verdict" id="sim-verdict"></p>
+  </div>
+
+  <p>Протокол — это два скучных ритуала, которые спасают деньги:</p>
+  <ul class="clean">
+    <li><strong>«Итог для паспорта»</strong> в конце каждого чата: решения, новые вопросы, изменения денег и сроков. Пять строк. GPT переносит их в файлы.</li>
+    <li><strong>«Журнал изменений»</strong>: дата, файл, что было → что стало, кто утвердил, из какого чата. Claude начинает любую проверку с журнала: так он видит, что поменялось, и не перечитывает всё подряд.</li>
+  </ul>
+  <p>Один журнал полезнее десятка выгрузок чатов. Выгрузки — это архив «откуда взялась эта цифра», а не источник истины.</p>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">450</span><span style="left:calc(25% - 10px)">500</span><span style="left:calc(50% - 10px)">550</span><span style="left:calc(75% - 10px)">600</span></div>
+
+<section class="flow">
+  <span class="tape r">Часть 4</span>
+  <h2>Музей пойманных косяков</h2>
+  <p>Всё, что ниже, реально случилось за пару недель. Ни один пункт не требовал гениальности. Требовался второй взгляд и привычка сверять файлы между собой. Нажимай на экспонаты:</p>
+
+  <div class="museum">
+    <details class="exh"><summary><span class="tag">Экспонат 1 · деньги</span><h4>Потолок-оборотень</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>Хозяин выбрал натяжной потолок. В «Описании квартиры» при этом записано «подвесные из ГКЛ, это заменяет натяжные». В «Расходах» — 105 000 материалы + 85 000 монтаж + 95 000 малярка за ГКЛ.</p>
+      <span class="lbl">Как поймали</span><p><span class="who c">Claude</span> сверил решение в чате с двумя файлами и спросил, натяжной ли он везде. Оказалось, ГКЛ остаётся только на техшкафу за инсталляцией.</p>
+      <span class="lbl">Урок</span><p>Решение в чате не равно решению в файлах.</p></div></details>
+
+    <details class="exh"><summary><span class="tag">Экспонат 2 · размеры</span><h4>Призрачный зазор 30 мм</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>Полуостров: 320 + 450 + 600 + 550 = 1920. В «Описании» стояло 320 + 450 + 600 + 550 + 30 = 1950. Зазор справа от раковины то ли есть, то ли нет.</p>
+      <span class="lbl">Как поймали</span><p>Обычное сложение. Скучно, зато мебельщик бы не оценил.</p>
+      <span class="lbl">Урок</span><p>Пересчитывай суммы руками или кодом. ИИ отлично пишут «итого», но не всегда его считают.</p></div></details>
+
+    <details class="exh"><summary><span class="tag">Экспонат 3 · бухгалтерия</span><h4>Потерянный подотчёт</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>В авансовом отчёте подрядчика был расход на 23 486 ₽, которого не было в «Расходах». Плюс итог свода не совпадал с суммой этапов.</p>
+      <span class="lbl">Как поймали</span><p><span class="who c">Claude</span> прогнал таблицу кодом, а не «глазами».</p>
+      <span class="lbl">Урок</span><p>Подытоги — только в сводах, не в строках данных. Иначе таблица начнёт считать сама себя дважды.</p></div></details>
+
+    <details class="exh"><summary><span class="tag">Экспонат 4 · чертежи</span><h4>Мастер-санузел, которого нет</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>В примечаниях к электропроекту нашлись «мастер-санузел», «остров» и «лоджия». В квартире нет ни того, ни другого, ни третьего.</p>
+      <span class="lbl">Как поймали</span><p>Сверка примечаний с планом мебели.</p>
+      <span class="lbl">Урок</span><p>Проектировщики тоже копипастят. Шаблон из чужого проекта — повод спросить, что ещё оттуда переехало.</p></div></details>
+
+    <details class="exh"><summary><span class="tag">Экспонат 5 · люди</span><h4>Консультант, который продаёт</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>Человек, который оценивает, нужна ли сложная процедура согласования, одновременно продаёт услугу по этому согласованию. И торопит: «пакет надо брать сейчас».</p>
+      <span class="lbl">Как поймали</span><p>Правило манифеста: конфликт интересов источника фиксируется рядом с его оценкой.</p>
+      <span class="lbl">Урок</span><p>Это не значит, что он врёт. Это значит, что его слово — «Б», а не «А».</p></div></details>
+
+    <details class="exh"><summary><span class="tag">Экспонат 6 · техника</span><h4>Пустой Google Диск</h4><span class="open-hint">открыть →</span></summary>
+      <div class="body"><p>Коннектор Диска упорно говорил «файлов нет». Папку открыли по ссылке для всех — не помогло.</p>
+      <span class="lbl">Как поймали</span><p>Список последних файлов был пуст совсем. Значит, подключён не тот Google-аккаунт. Переподключили — всё нашлось.</p>
+      <span class="lbl">Урок</span><p>Публичная ссылка коннектору не нужна. Зато в папке лежали адрес и кадастровый номер, так что ссылку закрыли.</p></div></details>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">600</span><span style="left:calc(25% - 10px)">650</span><span style="left:calc(50% - 10px)">700</span><span style="left:calc(75% - 10px)">750</span></div>
+
+<section class="flow">
+  <span class="tape">Часть 5</span>
+  <h2>Что эти ребята реально умеют, а что тебе кажется</h2>
+  <p>Половина проблем совместной работы — не в моделях, а в ожиданиях. Ты думаешь, что ИИ «следит за проектом». Он не следит. Он спит, пока ты не позовёшь.</p>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Миф или правда</h3><span class="score" id="score-myths"></span></div>
+    <div class="quiz" data-set="myths"></div>
+  </div>
+  <p class="muted small">Возможности коннекторов и ИИ меняются от месяца к месяцу. Ответы верны для нашей связки осенью 2026 года. <strong>Проверка желательна</strong>, если читаешь это позже.</p>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">750</span><span style="left:calc(25% - 10px)">800</span><span style="left:calc(50% - 10px)">850</span><span style="left:calc(75% - 10px)">900</span></div>
+
+<section class="flow">
+  <span class="tape r">Часть 6</span>
+  <h2>Четыре волшебных слова</h2>
+  <p>ИИ не переписываются друг с другом напрямую. Почтальон — это ты. Чтобы не объяснять каждый раз заново, у нас есть короткие команды, и каждая запускает заранее описанный протокол. Жми:</p>
+
+  <div class="panel">
+    <div class="cmds" role="group" aria-label="Команды">
+      <button type="button" class="cmd" data-cmd="check" aria-pressed="true">Проверь Муравейник</button>
+      <button type="button" class="cmd" data-cmd="write" aria-pressed="false">Напиши ГПТ</button>
+      <button type="button" class="cmd" data-cmd="sum" aria-pressed="false">Итог для паспорта</button>
+      <button type="button" class="cmd" data-cmd="chan" aria-pressed="false">Проверь каналы</button>
+    </div>
+    <div class="term" id="term" aria-live="polite"></div>
+  </div>
+
+  <h3>Ритм</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Когда</th><th>Кто</th><th>Что</th></tr></thead>
+      <tbody>
+        <tr><td>Конец каждого чата</td><td><span class="who g">GPT</span></td><td>«Итог для паспорта» → в файлы и журнал</td></tr>
+        <tr><td>Раз в неделю</td><td><span class="who g">GPT</span> → <span class="who c">Claude</span></td><td>Сводка недели, затем «Проверь Муравейник»</td></tr>
+        <tr><td>Перед платежом и необратимыми работами</td><td><span class="who c">Claude</span> → <span class="who y">ТЫ</span></td><td>Чек-лист приёмки. Стяжка, закрытие стен, заказ дверей и мебели. Платишь после приёмки</td></tr>
+        <tr><td>Раз в месяц</td><td><span class="who g">GPT</span> + <span class="who c">Claude</span></td><td>Ревизия бюджета: прогноз, резерв, доля оценок «В»</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">900</span><span style="left:calc(25% - 10px)">950</span><span style="left:calc(50% - 14px)">1000</span><span style="left:calc(75% - 14px)">1050</span></div>
+
+<section class="flow">
+  <span class="tape">Часть 7</span>
+  <h2>«Решено» — самое опасное слово в проекте</h2>
+  <p>Ты сказал в чате «ну, может, натяжной». ИИ написал в итоге: «Решено: натяжной». Через неделю это уже факт, на нём стоят три других решения, и никто не помнит, что было «может».</p>
+  <p>ИИ, которые пишут саммари, отлично умеют превращать предложения в решения. Поэтому у каждой записи есть статус: <code>[ФАКТ]</code>, <code>[РЕШЕНО]</code>, <code>[ВАРИАНТ]</code>, <code>[ВОПРОС]</code>. И <code>[РЕШЕНО]</code> ставится только после подтверждения владельца.</p>
+  <p>С деньгами то же самое. У каждой суммы в бюджете — буква надёжности:</p>
+  <ul class="clean">
+    <li><strong>А</strong> — бумага: КП, договор, чек.</li>
+    <li><strong>Б</strong> — рыночный ориентир с источником.</li>
+    <li><strong>В</strong> — догадка. «Ну где-то так».</li>
+  </ul>
+  <p>Доля «В» в бюджете — это градусник. Если половина сметы на «В», у тебя не смета, а гороскоп.</p>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Поставь букву</h3><span class="score" id="score-abc"></span></div>
+    <div class="quiz" data-set="abc"></div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">1050</span><span style="left:calc(25% - 14px)">1100</span><span style="left:calc(50% - 14px)">1150</span><span style="left:calc(75% - 14px)">1200</span></div>
+
+<section class="flow">
+  <span class="tape r">Часть 8</span>
+  <h2>Домовой чат: золото, перемешанное с херней</h2>
+  <p>Соседи и управляющая компания — лучший источник знаний о конкретном доме: где течёт стояк, что требует УК, кто из подрядчиков уже накосячил этажом выше. Поэтому выгрузки домовых каналов тоже лежат на Диске.</p>
+  <p>Схема такая: <span class="who g">GPT</span> читает свежие выгрузки и приносит полезное. После твоего «да» это попадает в файл «Каналы». <span class="who c">Claude</span> при проверке смотрит, правильно ли GPT оценил пункты и не пропустил ли важное. Но сначала каждое сообщение надо понюхать:</p>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Детектор слухов</h3><span class="score" id="score-rumor"></span></div>
+    <div class="quiz" data-set="rumor"></div>
+  </div>
+  <p>И правило гигиены: в «Каналы» переносится суть. Без имён, телефонов и номеров квартир соседей.</p>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">1200</span><span style="left:calc(25% - 14px)">1250</span><span style="left:calc(50% - 14px)">1300</span><span style="left:calc(75% - 14px)">1350</span></div>
+
+<section class="flow">
+  <span class="tape">Знакомьтесь</span>
+  <h2>Бригада</h2>
+  <div class="gang">
+    <div class="card g"><span class="who g">ChatGPT</span><span class="role">Прораб документов</span>
+      <dl><dt>Сильное</dt><dd>Быстро пишет, держит файлы в порядке, умеет «сделай красиво».</dd>
+      <dt>Слабое</dt><dd>Любит слово «Готово!» и может записать «может быть» как «решено».</dd>
+      <dt>Фраза</dt><dd>«Обновил таблицу!» (а журнал?)</dd></dl></div>
+    <div class="card c"><span class="who c">Claude</span><span class="role">Технадзор-зануда</span>
+      <dl><dt>Сильное</dt><dd>Сверяет, пересчитывает, спрашивает «что должно оказаться неверным».</dd>
+      <dt>Слабое</dt><dd>Не видит изменений, пока не позовёшь. Иногда задаёт пять уточнений там, где хватило бы одного.</dd>
+      <dt>Фраза</dt><dd>«Отдавать GPT пока рано: тут два противоречия».</dd></dl></div>
+    <div class="card y"><span class="who y">ТЫ</span><span class="role">Заказчик</span>
+      <dl><dt>Сильное</dt><dd>Единственный, кто видит обоих, платит и отвечает.</dd>
+      <dt>Слабое</dt><dd>Если перестанешь запускать проверки, вся схема тихо умрёт.</dd>
+      <dt>Фраза</dt><dd>«Делаем всё, что предлагаешь!» (не надо всё)</dd></dl></div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">1350</span><span style="left:calc(25% - 14px)">1400</span><span style="left:calc(50% - 14px)">1450</span><span style="left:calc(75% - 14px)">1500</span></div>
+
+<section class="flow">
+  <span class="tape r">На холодильник</span>
+  <h2>Шпаргалка</h2>
+  <div class="cheat">
+    <div><h4><span class="n">1</span>Один файл — один редактор</h4><p>GPT правит, Claude проверяет. Два редактора = две правды.</p></div>
+    <div><h4><span class="n">2</span>Файл важнее чата</h4><p>Не записано в файл — не решено.</p></div>
+    <div><h4><span class="n">3</span>Итог в конце каждого чата</h4><p>Решения, вопросы, деньги, сроки. Пять строк.</p></div>
+    <div><h4><span class="n">4</span>Журнал изменений</h4><p>Было → стало, кто утвердил. С него начинается каждая проверка.</p></div>
+    <div><h4><span class="n">5</span>ИИ спят, пока не позовёшь</h4><p>Никто ничего не отслеживает сам. Проверки запускаешь ты.</p></div>
+    <div><h4><span class="n">6</span>«Решено» ставит владелец</h4><p>ИИ пишут «вариант», ты превращаешь в «решено».</p></div>
+    <div><h4><span class="n">7</span>Буква у каждой суммы</h4><p>А — бумага, Б — источник, В — догадка. Следи за долей «В».</p></div>
+    <div><h4><span class="n">8</span>Проверка до необратимого</h4><p>Перед стяжкой, закрытием стен, заказом мебели и каждым платежом.</p></div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"><span style="left:0">1500</span><span style="left:calc(25% - 14px)">1550</span><span style="left:calc(50% - 14px)">1600</span><span style="left:calc(75% - 14px)">1650</span></div>
+
+<section class="flow">
+  <h2>Так кто тут главный?</h2>
+  <p>Ты. Два ИИ на одном проекте работают не потому, что они умные, а потому, что у каждого своя полоса: один пишет, другой проверяет, третий (ты) решает. Без ролей получается коммуналка, где все правят один холодильник. С ролями получается бригада.</p>
+  <p>И последнее. Схема работает, только если её запускать. <strong>Что должно оказаться неверным, чтобы весь этот гид был лишним?</strong> Если ремонт ведёт один подрядчик «под ключ» по фиксированной смете, а ты только платишь по этапам. Тогда хватит чек-листа приёмки и одного ИИ. Если подрядчиков несколько, а закупки частично твои — добро пожаловать в бригаду.</p>
+
+  <h3 style="margin-top:12px">Что здесь факт, а что мнение</h3>
+  <ul class="clean honest">
+    <li><strong>Факты с объекта:</strong> суммы, размеры и косяки из музея взяты из реальной переписки и файлов проекта <span class="conf">уверенность высокая</span>.</li>
+    <li><strong>Возможности инструментов:</strong> что ИИ не видят чатов друг друга, не сохраняют сами и что коннектор работает от аккаунта, а не по публичной ссылке, — проверено на нашей связке осенью 2026 <span class="conf">высокая</span>. Что ChatGPT не выгружает чаты на Диск сам по расписанию — <span class="conf">средняя</span>, проверь в своей версии.</li>
+    <li><strong>Гипотеза:</strong> разные модели ловят разные ошибки. Правдоподобно, но не измерено <span class="conf">средняя</span>.</li>
+    <li><strong>Мнение:</strong> распределение ролей «GPT пишет, Claude проверяет» — выбор под этот проект. Можно и наоборот; важно, что роли разные.</li>
+    <li><strong>Главный риск схемы:</strong> накладные расходы. Ты становишься почтальоном и диспетчером. Если на это нет сил, лучше один ИИ плюс точечные проверки перед крупными решениями.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var SETS = {
+    roles:{opts:['GPT','Claude','Ты'], items:[
+      {q:'Внести правку в «Расходы»', a:'GPT', why:'У файла один редактор. Если Claude тоже начнёт править, получишь две версии правды.'},
+      {q:'Сверить итог свода с суммой этапов', a:'Claude', why:'Классика контролёра. Так нашлись расхождение в итогах и потерянные 23 486 ₽.'},
+      {q:'Удалить строку из бюджета', a:'Ты', why:'GPT может предложить и подготовить, но удаляет только после твоего «да» и с записью в журнале. Ничего не удалять молча.'},
+      {q:'Решить, какой держать резерв', a:'Ты', why:'Деньги — твои решения. ИИ может сказать, что 10% — нижняя граница диапазона, но выбираешь ты.'},
+      {q:'Составить чек-лист приёмки перед оплатой этапа', a:'Claude', why:'Измеримые критерии, что сфотографировать до закрытия, что оформить актом. Платишь после приёмки.'},
+      {q:'Перенести принятое замечание в файл', a:'GPT', why:'Claude пишет замечание, ты принимаешь, GPT переносит и отмечает в журнале.'},
+      {q:'Отредактировать «Замечания Claude»', a:'Claude', why:'Это файл контролёра. GPT там может только отметить статус пункта: перенесён или отклонён тобой.'},
+      {q:'Разобрать КП подрядчика: что входит, а что нет', a:'Claude', why:'Например, в одном КП не оказалось трасс и штробления. Такое ловится до подписания, а не после.'},
+      {q:'Первым прочитать свежую выгрузку домового чата', a:'GPT', why:'GPT просеивает и приносит полезное. Claude потом проверяет, как GPT оценил пункты.'}
+    ]},
+    myths:{opts:['Правда','Миф'], items:[
+      {q:'Claude сам заметит, что GPT поменял файл на Диске.', a:'Миф', why:'Claude читает Диск только по запросу внутри разговора. Пока не скажешь «Проверь», он ни о чём не знает.'},
+      {q:'GPT не видит твоих чатов с Claude, а Claude не видит чатов с GPT.', a:'Правда', why:'Каждый живёт в своём окне. Мост между ними — файлы на Диске и ты.'},
+      {q:'Открыл папку «всем по ссылке» — коннектор её увидит.', a:'Миф', why:'Коннектор работает от подключённого аккаунта. Публичная ссылка ему не помогает, зато открывает документы всему интернету.'},
+      {q:'Коннектор вернул пусто — значит, файлов там нет.', a:'Миф', why:'У нас был подключён не тот Google-аккаунт. Пустой список последних файлов — главный признак.'},
+      {q:'Через один коннектор Диска Claude может переписать текст внутри документа.', a:'Миф', why:'Коннектор Диска умел создавать, копировать, переименовывать файлы, но не править текст внутри. Помогло подключение Google Docs.'},
+      {q:'Таблицу на 300 строк Claude прочтёт целиком через Диск.', a:'Миф', why:'Диск отдал только образцы строк. Целиком прочитать помог коннектор Таблиц с запросом по диапазонам.'},
+      {q:'Чем больше выгрузок чатов, тем точнее проверка.', a:'Миф', why:'В чатах полно отменённых решений, длинные файлы читаются не целиком. Журнал изменений полезнее десятка выгрузок.'}
+    ]},
+    abc:{opts:['А','Б','В'], items:[
+      {q:'Сумма из подписанного договора с подрядчиком', a:'А', why:'Бумага с подписью. Лучше не бывает.'},
+      {q:'Цена смесителя с сайта магазина, ссылка и дата сохранены', a:'Б', why:'Рыночный ориентир с источником. Станет «А», когда появится чек.'},
+      {q:'«Прораб сказал, где-то тысяч сорок»', a:'В', why:'Устно и без бумаги. Записывать можно, верить на слово нельзя.'},
+      {q:'Чек из строймагазина', a:'А', why:'Деньги уже ушли, сумма известна до копейки.'},
+      {q:'«GPT прикинул по рынку» без ссылки', a:'В', why:'ИИ без источника — это та же догадка, только увереннее звучит.'},
+      {q:'Оценка консультанта, который сам продаёт эту услугу', a:'Б', why:'Источник есть, но с конфликтом интересов. Пометка обязательна. Хорошо бы сравнить со вторым КП.'}
+    ]},
+    rumor:{opts:['Официально','Опыт соседа','Реклама','Слух'], items:[
+      {q:'Канал УК: «14.10 отключение горячей воды с 10:00 до 18:00»', a:'Официально', why:'Официальный канал управляющей компании. Можно сразу в календарь.'},
+      {q:'«У нас на 9-м после опрессовки капало с вводов, проверьте свои»', a:'Опыт соседа', why:'Ценная штука. Пометить датой сообщения и проверить у себя до закрытия стен.'},
+      {q:'«Делаем шумоизоляцию лучше всех, соседям скидка 15%, пишите в личку»', a:'Реклама', why:'Не опыт, а оффер. В «Каналы» — только с пометкой «реклама».'},
+      {q:'«Говорят, застройщик будет штрафовать за перенос кухни»', a:'Слух', why:'Кто говорит? Где документ? Записать как вопрос и проверить у официального источника.'},
+      {q:'«Мой электрик сказал брать только вот этот щиток, ссылка»', a:'Реклама', why:'Совет подрядчика в домовом чате — не нейтральный опыт. Возможно, хороший совет, но с интересом.'},
+      {q:'Канал УК: письмо с правилами шумных работ, PDF', a:'Официально', why:'Документ. Скачать на Диск, текст продублировать: PDF ИИ читают ненадёжно.'}
+    ]}
+  };
+
+  function el(tag, cls, txt){var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e;}
+
+  document.querySelectorAll('.quiz').forEach(function(box){
+    var key = box.getAttribute('data-set'), set = SETS[key], scoreEl = document.getElementById('score-'+key);
+    var right=0, done=0;
+    function upd(){ scoreEl.textContent = 'верно ' + right + ' из ' + done + ' · всего ' + set.items.length; }
+    function build(){
+      box.innerHTML=''; right=0; done=0; upd();
+      set.items.forEach(function(it){
+        var qi=el('div','qi'), q=el('p','q',it.q), opts=el('div','opts'), why=el('p','why');
+        why.hidden=true;
+        set.opts.forEach(function(o){
+          var b=el('button','opt',o); b.type='button';
+          b.addEventListener('click',function(){
+            var ok = o===it.a; done++; if(ok) right++; upd();
+            opts.querySelectorAll('button').forEach(function(x){ x.disabled=true; if(x.textContent===it.a) x.classList.add('right'); });
+            if(!ok) b.classList.add('wrong');
+            why.innerHTML=''; var v=el('b', ok?'v-ok':'v-bad', ok?'База. ':'Мимо, это «'+it.a+'». ');
+            why.appendChild(v); why.appendChild(document.createTextNode(it.why)); why.hidden=false;
+          });
+          opts.appendChild(b);
+        });
+        qi.appendChild(q); qi.appendChild(opts); qi.appendChild(why); box.appendChild(qi);
+      });
+      var r=el('button','reset','начать заново'); r.type='button'; r.addEventListener('click',build); box.appendChild(r);
+    }
+    build();
+  });
+
+  /* simulator */
+  var SIM = {
+    off:{steps:[
+      ['Пн','В чате с GPT: «Потолок делаем натяжной». GPT: «Отличный выбор!»','n'],
+      ['Пн','Чат закрыт. В файлах ничего не поменялось.','bad'],
+      ['Ср','«Описание квартиры» по-прежнему: «подвесные из ГКЛ».','bad'],
+      ['Пт','Claude проверяет файлы. Для него ГКЛ — действующее решение, ведь в файле так.','bad'],
+      ['Пт','В «Расходах» живут 285 000 ₽ на ГКЛ. Резерв посчитан от неверной суммы.','bad'],
+      ['След. пн','Прораб смотрит в «Описание» и заказывает профиль для ГКЛ.','bad']],
+      verdict:'Итог: оба ИИ формально правы, а ты заплатил за профиль, который не нужен.'},
+    on:{steps:[
+      ['Пн','В чате с GPT: «Потолок делаем натяжной».','n'],
+      ['Пн','В конце чата — «Итог для паспорта»: [РЕШЕНО] потолки натяжные, подтверждено владельцем.','good'],
+      ['Пн','GPT правит «Описание» и пишет в журнал: «подвесные ГКЛ → натяжной, утвердил владелец».','good'],
+      ['Пт','«Проверь Муравейник». Claude начинает с журнала и видит изменение.','good'],
+      ['Пт','Claude: «В Расходах остались строки ГКЛ на 285 000 ₽. ГКЛ где-то остаётся?»','good'],
+      ['Пт','Ты: «Только техшкаф за инсталляцией». GPT чистит бюджет, журнал фиксирует.','good']],
+      verdict:'Итог: противоречие поймано до закупки. Цена — пять строк в конце чата.'}
+  };
+  var stepsEl=document.getElementById('sim-steps'), verdictEl=document.getElementById('sim-verdict');
+  var bOff=document.getElementById('mode-off'), bOn=document.getElementById('mode-on');
+  function sim(mode){
+    var s=SIM[mode]; stepsEl.innerHTML='';
+    s.steps.forEach(function(x){ var li=el('li',x[2]); li.appendChild(el('span','when',x[0])); li.appendChild(el('span','what',x[1])); stepsEl.appendChild(li); });
+    verdictEl.textContent=s.verdict;
+    bOff.setAttribute('aria-pressed', mode==='off'); bOn.setAttribute('aria-pressed', mode==='on');
+  }
+  bOff.addEventListener('click',function(){sim('off')}); bOn.addEventListener('click',function(){sim('on')});
+  sim('off');
+
+  /* console */
+  var CMD = {
+    check:[['p','> Проверь Муравейник'],['c','Claude: читаю «Журнал изменений» — что поменялось с прошлой проверки'],['c','Claude: читаю «Расходы» и «Описание квартиры»'],['c','Claude: арифметика итогов · пропуски и дубли · решения vs бюджет'],['c','Claude: просроченные вопросы «решить до» · ближайшие платежи и приёмки'],['c','Claude: пишу в «Замечания Claude», у каждого пункта уверенность'],['y','Ты: принять / отклонить по пунктам'],['g','GPT: переносит принятое в файлы, отмечает в журнале'],['d','# ИИ не правят файлы друг друга. Каждый в своей полосе.']],
+    write:[['p','> Напиши ГПТ'],['c','Claude: кладу файл с сообщением в папку мини-проекта на Диске'],['d','# имя мини-проекта = имя чата, например «Файл Расчеты»'],['y','Ты: в чате GPT — «прочитай сообщение от Claude в папке …»'],['g','GPT: читает, отвечает в файлах или в журнале'],['d','# ИИ не переписываются напрямую. Почтальон — ты.']],
+    sum:[['p','> Итог для паспорта'],['c','Решения:      [РЕШЕНО] только то, что ты подтвердил'],['c','Варианты:     [ВАРИАНТ] всё, что «может быть»'],['c','Вопросы:      [ВОПРОС] с датой «решить до»'],['c','Деньги:       что изменилось, буква А / Б / В'],['c','Сроки:        что сдвинулось'],['g','GPT: переносит в файлы и журнал'],['d','# Источник истины — файлы, а не история чатов.']],
+    chan:[['p','> Проверь каналы'],['c','Claude: читаю свежие выгрузки домовых каналов целиком'],['c','Claude: сверяю с файлом «Каналы» — что GPT взял, что пропустил'],['c','Claude: проверяю пометки надёжности: официально / сосед / реклама / слух'],['c','Claude: отдельно ищу требования УК к работам и проблемы стояков'],['d','# Обычная проверка смотрит только файл «Каналы».'],['d','# Полное чтение всех выгрузок — по этой команде, иначе дорого и мало толку.']]
+  };
+  var term=document.getElementById('term'), timer=null;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function run(k){
+    clearTimeout(timer); term.innerHTML='';
+    document.querySelectorAll('.cmd').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-cmd')===k); });
+    var lines=CMD[k], i=0;
+    (function next(){
+      if(i>=lines.length) return;
+      var ln=el('span','ln '+lines[i][0], lines[i][1]); term.appendChild(ln); i++;
+      if(reduce) next(); else timer=setTimeout(next, 260);
+    })();
+  }
+  document.querySelectorAll('.cmd').forEach(function(b){ b.addEventListener('click',function(){ run(b.getAttribute('data-cmd')); }); });
+  /* render first command fully at rest */
+  (function(){ var lines=CMD.check; lines.forEach(function(l){ term.appendChild(el('span','ln '+l[0], l[1])); }); })();
+})();
+</script>
+
+</body>
+</html>
